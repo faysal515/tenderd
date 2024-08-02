@@ -1,18 +1,20 @@
 import { Kafka } from "kafkajs";
 import env from "../env";
-import { Inject, Service } from "typedi";
+import { Service } from "typedi";
 
 @Service()
 export class KafkaClient {
   private kafka: Kafka;
   private producer: any;
+  private consumer: any;
 
   constructor() {
     this.kafka = new Kafka({
-      clientId: env.KAFKA_CLIENT_ID,
-      brokers: [env.KAFKA_BROKER],
+      clientId: env.kafka.KAFKA_CLIENT_ID,
+      brokers: [env.kafka.KAFKA_BROKER],
     });
     this.producer = this.kafka.producer();
+    this.consumer = this.kafka.consumer({ groupId: "sensor-group" });
   }
 
   public async connectProducer() {
@@ -27,6 +29,32 @@ export class KafkaClient {
     await this.producer.send({
       topic,
       messages,
+    });
+  }
+
+  public async connectConsumer() {
+    await this.consumer.connect();
+    await this.consumer.subscribe({
+      topic: env.kafka.VEHICLE_SENSOR_TOPIC,
+      fromBeginning: false,
+    });
+  }
+
+  public async consumeMessages(
+    eachMessageHandler: (message: any) => Promise<void>
+  ) {
+    await this.consumer.run({
+      eachMessage: async ({
+        topic,
+        partition,
+        message,
+      }: {
+        topic: string;
+        partition: string;
+        message: any;
+      }) => {
+        await eachMessageHandler(message);
+      },
     });
   }
 }

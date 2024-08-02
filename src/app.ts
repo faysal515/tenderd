@@ -11,6 +11,7 @@ import { AddRequestIdMiddleware } from "./middlewares/AddRequestIdMiddleware";
 import { ErrorHandler } from "./middlewares/ErrorMiddleware";
 import { SensorSimulatorService } from "./services/SensorSimulatorService";
 import { KafkaClient } from "./services/KafkaClient";
+import { VehicleSensorUpdateService } from "./services/VehicleSensorUpdateService"; // Updated import
 import env from "./env";
 
 // Set up TypeDI as the container for routing-controllers
@@ -49,6 +50,17 @@ const startKafkaProducer = async () => {
   }
 };
 
+const startKafkaConsumer = async () => {
+  const vehicleSensorUpdateService = Container.get(VehicleSensorUpdateService);
+  try {
+    await vehicleSensorUpdateService.startConsuming();
+    console.log("Kafka consumer started");
+  } catch (error) {
+    console.error("Error starting Kafka consumer:", error);
+    process.exit(1);
+  }
+};
+
 const startServer = () => {
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
@@ -57,6 +69,7 @@ const startServer = () => {
 
 const init = async () => {
   await connectToMongoDB();
+  await startKafkaConsumer();
   if (env.RUN_SIMULATION) {
     await startKafkaProducer();
   }

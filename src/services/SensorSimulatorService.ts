@@ -1,5 +1,6 @@
 import { Service } from "typedi";
 import { KafkaClient } from "./KafkaClient";
+import env from "../env";
 
 @Service()
 export class SensorSimulatorService {
@@ -48,7 +49,7 @@ export class SensorSimulatorService {
     setInterval(async () => {
       for (const vehicle of this.vehicles) {
         const sensorData = this.generateSensorData(vehicle);
-        await this.kafkaClient.sendSensorData("vehicle-sensor-data", [
+        await this.kafkaClient.sendSensorData(env.kafka.VEHICLE_SENSOR_TOPIC, [
           { key: sensorData.ecuDeviceId, value: JSON.stringify(sensorData) },
         ]);
         console.log("Published sensor data:", sensorData);

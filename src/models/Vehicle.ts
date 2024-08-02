@@ -33,32 +33,32 @@ const VehicleSchema: Schema = new Schema(
     year: { type: Number, required: true },
     ecuDeviceId: { type: String, required: true, unique: true },
     aggregatedSensorData: {
-      odometerReading: { type: Number, default: 0, required: false },
-      engineHours: { type: Number, default: 0, required: false },
-      fuelLevel: { type: String, default: "Full", required: false },
+      odometerReading: { type: Number, default: 0 },
+      engineHours: { type: Number, default: 0 },
+      fuelLevel: { type: String, default: "Full" },
       lastGpsLocation: {
-        latitude: { type: Number, default: 0, required: false },
-        longitude: { type: Number, default: 0, required: false },
+        latitude: { type: Number, default: 0 },
+        longitude: { type: Number, default: 0 },
+        timestamp: { type: Date, default: Date.now },
       },
-      timestamp: { type: Date, default: Date.now, required: false },
+      timestamp: { type: Date, default: Date.now },
     },
     lastMaintenanceRecord: {
-      date: { type: Date, default: Date.now, required: false },
-      description: { type: String, default: "", required: false },
-      cost: { type: Number, default: 0, required: false },
+      date: { type: Date, default: Date.now },
+      description: { type: String, default: "" },
+      cost: { type: Number, default: 0 },
     },
     usageAnalytics: {
-      hoursOperated: { type: Number, default: 0, required: false },
-      distanceTraveled: { type: Number, default: 0, required: false },
+      hoursOperated: { type: Number, default: 0 },
+      distanceTraveled: { type: Number, default: 0 },
     },
   },
   {
     toJSON: {
-      virtuals: true, // Include virtuals when document is converted to JSON
+      virtuals: true,
       transform: (doc, ret) => {
-        ret.id = ret._id.toString(); // Convert ObjectId to string
-        delete ret._id; // Remove the _id property
-        // delete ret.__v; // Optionally remove the version key
+        ret.id = ret._id.toString();
+        delete ret._id;
         return ret;
       },
     },
