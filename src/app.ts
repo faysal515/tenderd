@@ -13,6 +13,7 @@ import { SensorSimulatorService } from "./services/SensorSimulatorService";
 import { KafkaClient } from "./services/KafkaClient";
 import { VehicleSensorUpdateService } from "./services/VehicleSensorUpdateService"; // Updated import
 import env from "./env";
+import { setupSwagger } from "./swagger";
 
 // Set up TypeDI as the container for routing-controllers
 useContainer(Container);
@@ -73,6 +74,7 @@ const init = async () => {
   if (env.RUN_SIMULATION) {
     await startKafkaProducer();
   }
+  setupSwagger(app);
   startServer();
   console.log("======= ", env);
 };

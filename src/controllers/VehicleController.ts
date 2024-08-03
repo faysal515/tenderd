@@ -19,6 +19,7 @@ import {
   CreateMaintenanceRecordDto,
 } from "../dto/Vehicle.dto";
 import { VehicleSensorUpdateService } from "../services/VehicleSensorUpdateService";
+import { OpenAPI } from "routing-controllers-openapi";
 
 @JsonController("/vehicles")
 @Service()
@@ -30,6 +31,7 @@ export class VehicleController {
   ) {}
 
   @Post()
+  @OpenAPI({ summary: "Create a new vehicle" })
   async createVehicle(
     @Res() res: Response,
     @Body({ validate: true }) vehicleData: CreateVehicleDto
@@ -44,6 +46,7 @@ export class VehicleController {
   }
 
   @Post("/:vehicleId/maintenance")
+  @OpenAPI({ summary: "Add maintenance record to a vehicle" })
   async addMaintenanceRecord(
     @Param("vehicleId") vehicleId: string,
     @Body({ validate: true }) maintenanceRecordData: CreateMaintenanceRecordDto,
@@ -65,6 +68,7 @@ export class VehicleController {
   }
 
   @Get("/:vehicleId/maintenance")
+  @OpenAPI({ summary: "Get maintenance records of a vehicle" })
   async getMaintenanceRecords(
     @Param("vehicleId") vehicleId: string,
     @Res() res: Response
@@ -84,6 +88,7 @@ export class VehicleController {
 
   @Get("/:vehicleId/status")
   @OnUndefined(200)
+  @OpenAPI({ summary: "Get real-time status of a vehicle" })
   async getVehicleStatus(
     @Param("vehicleId") vehicleId: string,
     @Res() res: Response,
@@ -128,22 +133,14 @@ export class VehicleController {
         statusUpdateListener
       );
 
-      // // Send a keep-alive message every 30 seconds
-      // const keepAliveInterval = setInterval(() => {
-      //   res.write(": keep-alive\n\n");
-      // }, 30000);
-
-      // Clean up on connection close
       req.on("close", () => {
         console.log("Client closed connection for ecuDeviceId:", ecuDeviceId);
-        // clearInterval(keepAliveInterval);
         this.vehicleSensorUpdateService.offVehicleStatusUpdate(
           ecuDeviceId,
           statusUpdateListener
         );
       });
 
-      // Prevent the function from ending
       await new Promise(() => {});
     } catch (error) {
       console.error("Error in getVehicleStatus:", error);
