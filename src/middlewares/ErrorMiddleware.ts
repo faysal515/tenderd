@@ -25,10 +25,6 @@ export class ErrorHandler implements ExpressErrorMiddlewareInterface {
       requestId: res.locals.requestId,
     });
 
-    // if (res.headersSent) {
-    //   return next(error);
-    // }
-
     // Check if it's a validation error
     if (error.name === "BadRequestError" && errors.length) {
       const formattedErrors = errors.map((err: any) => ({

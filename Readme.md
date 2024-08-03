@@ -10,3 +10,8 @@
 10. simulation of vehicle sensor
 11. swagger
 12. unit tests
+
+
+
+----
+Transaction omitted

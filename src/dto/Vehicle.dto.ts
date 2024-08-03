@@ -1,4 +1,14 @@
-import { IsString, IsInt, Length, Min, Max } from "class-validator";
+import {
+  IsString,
+  IsInt,
+  Length,
+  Min,
+  Max,
+  IsDate,
+  IsNumber,
+} from "class-validator";
+
+import { Type } from "class-transformer";
 
 export class CreateVehicleDto {
   @IsString()
@@ -17,4 +27,16 @@ export class CreateVehicleDto {
   @IsString()
   @Length(5, 50)
   public ecuDeviceId: string;
+}
+
+export class CreateMaintenanceRecordDto {
+  @IsString()
+  public description: string;
+
+  @IsDate()
+  @Type(() => Date)
+  public date: Date;
+
+  @IsNumber()
+  public cost: number;
 }

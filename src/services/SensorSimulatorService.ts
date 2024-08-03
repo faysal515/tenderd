@@ -54,6 +54,6 @@ export class SensorSimulatorService {
         ]);
         console.log("Published sensor data:", sensorData);
       }
-    }, 5000); // Every 5 seconds
+    }, 15000);
   }
 }

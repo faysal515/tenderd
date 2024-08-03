@@ -1,6 +1,13 @@
 import { Service } from "typedi";
+import mongoose, { Types } from "mongoose";
 import Vehicle, { IVehicle } from "../models/Vehicle";
-import { CreateVehicleDto } from "../dto/Vehicle.dto";
+import MaintenanceRecord, {
+  IMaintenanceRecord,
+} from "../models/MaintenanceRecord";
+import {
+  CreateVehicleDto,
+  CreateMaintenanceRecordDto,
+} from "../dto/Vehicle.dto";
 import LoggerService from "./LoggerService";
 
 @Service()
@@ -12,10 +19,7 @@ export class VehicleService {
       ...vehicleData,
       aggregatedSensorData: null,
       lastMaintenanceRecord: null,
-      usageAnalytics: {
-        hoursOperated: 0,
-        distanceTraveled: 0,
-      },
+      usageAnalytics: null,
     };
 
     try {
@@ -60,7 +64,7 @@ export class VehicleService {
   private async calculateUsageAnalytics(
     ecuDeviceId: string,
     aggregatedSensorData: any
-  ) {
+  ): Promise<{ distanceTraveled: number; hoursOperated: number }> {
     const vehicle = await Vehicle.findOne({ ecuDeviceId });
 
     if (!vehicle) {
@@ -81,21 +85,80 @@ export class VehicleService {
       vehicle.usageAnalytics?.distanceTraveled ?? 0;
     const previousHoursOperated = vehicle.usageAnalytics?.hoursOperated ?? 0;
 
-    // Debugging logs
-    console.log("previousOdometerReading:", previousOdometerReading);
-    console.log("previousEngineHours:", previousEngineHours);
-    console.log("newOdometerReading:", newOdometerReading);
-    console.log("newEngineHours:", newEngineHours);
-    console.log("distanceTraveled:", distanceTraveled);
-    console.log("hoursOperated:", hoursOperated);
-    console.log("previousDistanceTraveled:", previousDistanceTraveled);
-    console.log("previousHoursOperated:", previousHoursOperated);
-
     return {
       distanceTraveled:
         previousDistanceTraveled + Math.max(distanceTraveled, 0),
       hoursOperated: previousHoursOperated + Math.max(hoursOperated, 0),
     };
+  }
+
+  public async addMaintenanceRecord(
+    vehicleId: string,
+    maintenanceRecordData: CreateMaintenanceRecordDto
+  ): Promise<IMaintenanceRecord> {
+    try {
+      const objectId = new Types.ObjectId(vehicleId);
+      const newRecord = new MaintenanceRecord({
+        ...maintenanceRecordData,
+        vehicleId: objectId,
+      });
+      const savedRecord = await newRecord.save();
+
+      await Vehicle.updateOne(
+        { _id: objectId },
+        { $set: { lastMaintenanceRecord: maintenanceRecordData } }
+      );
+
+      this.logger.info("Maintenance record added successfully", {
+        recordId: savedRecord._id,
+      });
+      return savedRecord.toJSON();
+    } catch (error) {
+      this.logger.error("Error adding maintenance record", { error });
+      throw error;
+    }
+  }
+
+  public async getMaintenanceRecords(
+    vehicleId: string
+  ): Promise<IMaintenanceRecord[]> {
+    try {
+      const objectId = new Types.ObjectId(vehicleId); // Convert vehicleId to ObjectId
+      const records = await MaintenanceRecord.find({
+        vehicleId: objectId,
+      }).exec();
+      this.logger.info("Maintenance records retrieved successfully", {
+        vehicleId,
+        count: records.length,
+      });
+      return records.map((record) => record.toJSON());
+    } catch (error) {
+      this.logger.error("Error retrieving maintenance records", { error });
+      throw error;
+    }
+  }
+
+  public async getVehicleStatus(vehicleId: string): Promise<IVehicle | null> {
+    try {
+      const objectId = new Types.ObjectId(vehicleId);
+      const vehicle = await Vehicle.findById(objectId).exec();
+      return vehicle ? vehicle.toJSON() : null;
+    } catch (error) {
+      this.logger.error("Error retrieving vehicle status", { error });
+      throw error;
+    }
+  }
+
+  public async getVehicleStatusByEcuId(
+    ecuDeviceId: string
+  ): Promise<IVehicle | null> {
+    try {
+      const vehicle = await Vehicle.findOne({ ecuDeviceId }).exec();
+      return vehicle ? vehicle.toJSON() : null;
+    } catch (error) {
+      this.logger.error("Error retrieving vehicle status by ECU ID", { error });
+      throw error;
+    }
   }
 }
 
