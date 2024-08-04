@@ -53,13 +53,12 @@ Views are pretty basic. **Vehicle realtime status page is showing flickering eve
 
 **Hybrid approach for Maintenance record** - Mixing denormalization for quick access to the latest maintenance record in the vehicle collection which might be useful from Product UX view. and normalization for keeping a full chain of history with its full details.
 
-Simulation is done in the same project without making it a different microservice since this is a demonstration. It's controlled by environment variable 'RUN_SIMULATION'
 
 All modern vehicles are equipped with an ECU(Electronic Control Unit) board that communicates with sensors and the server. Thus the assumption is that, hardware attached in the vehicle can emit all data at once
 
 For IoT real-time status, IoT gateways like ThingsBoard are typically used, with inputs in specific hardware code. for simplicity, it's plain object.
 
-In this simulation service, **Kafka** is used for publishing and consuming messages to update data, simplifying real-time status updates.
+Simulation is done in the same project without making it a different microservice since this is a demonstration. It's controlled by environment variable 'RUN_SIMULATION'. In this simulation service, **Kafka** is used for publishing and consuming messages to update data, simplifying real-time status updates.
 
 This assignment is a simplified simulation and does not cover all aspects required for a production environment, such as database optimization for writes and querying.
 
