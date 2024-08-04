@@ -30,7 +30,21 @@ export class VehicleController {
     @Inject() private vehicleSensorUpdateService: VehicleSensorUpdateService
   ) {}
 
-  @Post()
+  @Get("/")
+  @OpenAPI({ summary: "Get list of all vehicles" })
+  async getVehicles(@Res() res: Response): Promise<IVehicle[]> {
+    this.logger.info("Fetching all vehicles", {
+      requestId: res.locals.requestId,
+    });
+    const vehicles = await this.vehicleService.getVehicles();
+    this.logger.info("Vehicles fetched successfully", {
+      count: vehicles.length,
+      requestId: res.locals.requestId,
+    });
+    return vehicles;
+  }
+
+  @Post("/")
   @OpenAPI({ summary: "Create a new vehicle" })
   async createVehicle(
     @Res() res: Response,
@@ -108,7 +122,7 @@ export class VehicleController {
 
       const sendStatus = (status: any) => {
         console.log("Sending status for vehicle:", vehicleId, status);
-        res.write(`event: status\ndata: ${JSON.stringify(status)}\n\n`);
+        res.write(`event: message\ndata: ${JSON.stringify(status)}\n\n`);
       };
 
       const vehicle = await this.vehicleService.getVehicleStatus(vehicleId);
@@ -121,7 +135,7 @@ export class VehicleController {
 
       const ecuDeviceId = vehicle.ecuDeviceId;
       console.log("Initial status send for ecuDeviceId:", ecuDeviceId);
-      sendStatus(vehicle.aggregatedSensorData);
+      sendStatus(vehicle);
 
       const statusUpdateListener = (status: any) => {
         console.log("Status update received for ecuDeviceId:", ecuDeviceId);

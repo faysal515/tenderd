@@ -14,6 +14,19 @@ import LoggerService from "./LoggerService";
 export class VehicleService {
   constructor(private logger: LoggerService) {}
 
+  public async getVehicles(): Promise<IVehicle[]> {
+    try {
+      const vehicles = await Vehicle.find().exec();
+      this.logger.info("Vehicles retrieved successfully", {
+        count: vehicles.length,
+      });
+      return vehicles.map((vehicle) => vehicle.toJSON());
+    } catch (error) {
+      this.logger.error("Error retrieving vehicles", { error });
+      throw error;
+    }
+  }
+
   public async addVehicle(vehicleData: CreateVehicleDto): Promise<IVehicle> {
     const vehicleDataWithDefaults = {
       ...vehicleData,

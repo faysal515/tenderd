@@ -6,6 +6,24 @@
   },
   "paths": {
     "/vehicles": {
+      "get": {
+        "summary": "Get list of all vehicles",
+        "responses": {
+          "200": {
+            "description": "List of vehicles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IVehicle"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "summary": "Create a new vehicle",
         "requestBody": {

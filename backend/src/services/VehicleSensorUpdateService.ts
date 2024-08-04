@@ -29,7 +29,7 @@ export class VehicleSensorUpdateService {
           );
 
         const eventKey = `status-update-${sensorData.ecuDeviceId}`;
-        this.events.emit(eventKey, updatedVehicleStatus?.aggregatedSensorData);
+        this.events.emit(eventKey, updatedVehicleStatus);
         this.logger.info("Event emitter working ", { eventKey });
       } catch (error) {
         this.logger.error("Error processing message", { error });

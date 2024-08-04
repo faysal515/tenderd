@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import cors from "cors";
 import { useExpressServer, useContainer } from "routing-controllers";
 import { Container } from "typedi";
 import mongoose from "mongoose";
@@ -20,6 +21,9 @@ useContainer(Container);
 
 const app = express();
 const port = env.PORT;
+
+// Enable CORS with default options
+app.use(cors());
 
 useExpressServer(app, {
   defaultErrorHandler: false,
