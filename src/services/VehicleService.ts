@@ -61,7 +61,7 @@ export class VehicleService {
     }
   }
 
-  private async calculateUsageAnalytics(
+  public async calculateUsageAnalytics(
     ecuDeviceId: string,
     aggregatedSensorData: any
   ): Promise<{ distanceTraveled: number; hoursOperated: number }> {
