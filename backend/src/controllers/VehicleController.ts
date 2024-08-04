@@ -108,10 +108,9 @@ export class VehicleController {
     @Res() res: Response,
     @Req() req: Request
   ): Promise<void> {
-    console.log("SSE connection opened for vehicle:", vehicleId);
+    this.logger.info("SSE connection opened for vehicle:", { vehicleId });
 
     try {
-      // Set headers for SSE
       res.writeHead(200, {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
@@ -121,24 +120,26 @@ export class VehicleController {
       res.write("event: connected\ndata: Connection established\n\n");
 
       const sendStatus = (status: any) => {
-        console.log("Sending status for vehicle:", vehicleId, status);
+        this.logger.info("Sending status for vehicle:", { vehicleId });
         res.write(`event: message\ndata: ${JSON.stringify(status)}\n\n`);
       };
 
       const vehicle = await this.vehicleService.getVehicleStatus(vehicleId);
       if (!vehicle) {
-        console.log("Vehicle not found:", vehicleId);
+        this.logger.info("Vehicle not found:", { vehicleId });
         sendStatus({ error: "Vehicle not found" });
-        res.end(); // End the response if vehicle is not found
+        res.end();
         return;
       }
 
       const ecuDeviceId = vehicle.ecuDeviceId;
-      console.log("Initial status send for ecuDeviceId:", ecuDeviceId);
+      this.logger.info("Initial status send for ecuDeviceId:", { ecuDeviceId });
       sendStatus(vehicle);
 
       const statusUpdateListener = (status: any) => {
-        console.log("Status update received for ecuDeviceId:", ecuDeviceId);
+        this.logger.info("Status update received for ecuDeviceId:", {
+          ecuDeviceId,
+        });
         sendStatus(status);
       };
 
@@ -148,7 +149,10 @@ export class VehicleController {
       );
 
       req.on("close", () => {
-        console.log("Client closed connection for ecuDeviceId:", ecuDeviceId);
+        this.logger.info(
+          "Client closed connection for ecuDeviceId:",
+          ecuDeviceId
+        );
         this.vehicleSensorUpdateService.offVehicleStatusUpdate(
           ecuDeviceId,
           statusUpdateListener

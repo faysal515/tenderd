@@ -17,11 +17,6 @@ export default class LoggerService {
     });
   }
 
-  // private getRequestContext() {
-  //   const req: Request = Container.get("request");
-  //   return req.requestId ? { requestId: req.requestId } : {};
-  // }
-
   public info(message: string, meta?: any) {
     this.loggerInstance.info(message, { ...meta });
   }

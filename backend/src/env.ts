@@ -9,6 +9,4 @@ const env = {
   },
 };
 
-// console.log("-----", env);
-
 export default env;

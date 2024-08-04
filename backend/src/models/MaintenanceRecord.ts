@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IMaintenanceRecord extends Document {
-  vehicleId: string; // Reference to the vehicle
+  vehicleId: string;
   date: Date;
   description: string;
   cost: number;

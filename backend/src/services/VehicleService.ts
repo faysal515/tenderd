@@ -136,7 +136,7 @@ export class VehicleService {
     vehicleId: string
   ): Promise<IMaintenanceRecord[]> {
     try {
-      const objectId = new Types.ObjectId(vehicleId); // Convert vehicleId to ObjectId
+      const objectId = new Types.ObjectId(vehicleId);
       const records = await MaintenanceRecord.find({
         vehicleId: objectId,
       }).exec();

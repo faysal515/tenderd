@@ -12,17 +12,15 @@ import { AddRequestIdMiddleware } from "./middlewares/AddRequestIdMiddleware";
 import { ErrorHandler } from "./middlewares/ErrorMiddleware";
 import { SensorSimulatorService } from "./services/SensorSimulatorService";
 import { KafkaClient } from "./services/KafkaClient";
-import { VehicleSensorUpdateService } from "./services/VehicleSensorUpdateService"; // Updated import
+import { VehicleSensorUpdateService } from "./services/VehicleSensorUpdateService";
 import env from "./env";
 import { setupSwagger } from "./swagger";
 
-// Set up TypeDI as the container for routing-controllers
 useContainer(Container);
 
 const app = express();
 const port = env.PORT;
 
-// Enable CORS with default options
 app.use(cors());
 
 useExpressServer(app, {
@@ -80,7 +78,7 @@ const init = async () => {
   }
   setupSwagger(app);
   startServer();
-  console.log("======= ", env);
+  console.log("Safe to interact now with backend server");
 };
 
 if (require.main === module) {
