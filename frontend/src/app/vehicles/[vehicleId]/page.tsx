@@ -2,7 +2,11 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { addMaintenanceRecord, getVehicleStatus } from "../../../services/api";
+import {
+  addMaintenanceRecord,
+  getVehicleStatus,
+  getMaintenanceRecords,
+} from "../../../services/api";
 import {
   Typography,
   Button,
@@ -60,6 +64,7 @@ const VehicleDetails: React.FC = () => {
   const [form, setForm] = useState({ description: "", date: "", cost: "" });
   const [status, setStatus] = useState<AggregatedSensorData | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchVehicleStatus = useCallback(async () => {
     if (!vehicleId) return;
@@ -68,9 +73,20 @@ const VehicleDetails: React.FC = () => {
       const response = await getVehicleStatus(vehicleId);
       console.log("Vehicle status fetched:", response.data);
       setVehicle(response.data);
-      setMaintenanceRecords(response.data.maintenanceRecords || []);
     } catch (error) {
       console.error("Error fetching vehicle status:", error);
+    }
+  }, [vehicleId]);
+
+  const fetchMaintenanceRecords = useCallback(async () => {
+    if (!vehicleId) return;
+
+    try {
+      const response = await getMaintenanceRecords(vehicleId);
+      console.log("Maintenance records fetched:", response.data);
+      setMaintenanceRecords(response.data);
+    } catch (error) {
+      console.error("Error fetching maintenance records:", error);
     }
   }, [vehicleId]);
 
@@ -94,9 +110,17 @@ const VehicleDetails: React.FC = () => {
         const updatedStatus = JSON.parse(event.data);
         console.log("Parsed SSE update:", updatedStatus);
 
-        setStatus(updatedStatus);
-        setVehicle(updatedStatus);
-        setMaintenanceRecords(updatedStatus.maintenanceRecords || []);
+        if (updatedStatus.error) {
+          setErrorMessage(updatedStatus.error);
+          setVehicle(null);
+          setMaintenanceRecords([]);
+          setStatus(null);
+        } else {
+          setErrorMessage(null);
+          setStatus(updatedStatus);
+          setVehicle(updatedStatus);
+          fetchMaintenanceRecords();
+        }
       } catch (error) {
         console.error("Error parsing SSE data:", error);
       }
@@ -108,7 +132,7 @@ const VehicleDetails: React.FC = () => {
     };
 
     setEventSource(newEventSource);
-  }, [vehicleId]);
+  }, [vehicleId, fetchMaintenanceRecords]);
 
   useEffect(() => {
     if (vehicleId) {
@@ -117,6 +141,7 @@ const VehicleDetails: React.FC = () => {
         vehicleId
       );
       setupSSE();
+      fetchMaintenanceRecords();
     } else {
       console.log("vehicleId is not defined");
     }
@@ -127,7 +152,7 @@ const VehicleDetails: React.FC = () => {
         setEventSource(null);
       }
     };
-  }, [vehicleId, setupSSE]);
+  }, [vehicleId, setupSSE, fetchMaintenanceRecords]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -147,6 +172,7 @@ const VehicleDetails: React.FC = () => {
       };
       await addMaintenanceRecord(vehicleId, payload);
       handleClose();
+      fetchMaintenanceRecords();
     } catch (error: any) {
       console.error("Error adding maintenance record:", error);
       if (error.response && error.response.data && error.response.data.errors) {
@@ -164,7 +190,11 @@ const VehicleDetails: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      {vehicle ? (
+      {errorMessage ? (
+        <Typography variant="h6" className="mb-2" color="error">
+          {errorMessage}
+        </Typography>
+      ) : vehicle ? (
         <>
           <Typography variant="h4" className="mb-4">
             {`${vehicle.make} ${vehicle.vehicleModel} (${vehicle.year})`}

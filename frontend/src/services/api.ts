@@ -24,3 +24,7 @@ export const getVehicleDetails = async (vehicleId: string) => {
 export const getVehicleStatus = async (vehicleId: string) => {
   return await axios.get(`${backendUrl}/vehicles/${vehicleId}/status`);
 };
+
+export const getMaintenanceRecords = async (vehicleId: string) => {
+  return await axios.get(`${backendUrl}/vehicles/${vehicleId}/maintenance`);
+};
