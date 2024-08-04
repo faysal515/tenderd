@@ -19,9 +19,9 @@ docker-compose up --build
 # wait till you see server running in the console log to start interacting
 ```
 
-backend - http://localhost:3000
-docs - http://localhost:3000/docs
-frontend - http://localhost:3001
+- backend - http://localhost:3000
+- docs - http://localhost:3000/docs
+- frontend - http://localhost:3001
 
 **To see the realtime sensor data changing simulation it's must you create a vehicle having deviceId as `device-001`. which gets new sensor value in every 5 seconds.**
 
@@ -33,7 +33,7 @@ frontend - http://localhost:3001
 - **Class Validator**: For validating request payloads to ensure data integrity.
 - **Mongoose**: For interacting with MongoDB and managing data models.
 
-I've also custom middlewares and json formatted logger in place to track each request individually. This setup is useful in production for tracing API calls in services like ELK or Datadog.
+I've also custom middlewares and json formatted logger in place to track each request individually. This setup is useful in production for **tracing** API calls in services like ELK or Datadog.
 
 I've added a couple of unit tests and one integration test. Writing tests for the full application requires significant effort, but these examples demonstrate my capability in this area.
 
@@ -62,4 +62,4 @@ In this simulation service, **Kafka** is used for publishing and consuming messa
 This assignment is a simplified simulation and does not cover all aspects required for a production environment, such as database optimization for writes and querying.
 
 
-Thanks for reading till the end :). I'd appreciate getting a feedback over email
+Thanks for reading till the end :). I'd appreciate getting a feedback over email.
