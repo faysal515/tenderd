@@ -54,6 +54,6 @@ export class SensorSimulatorService {
         ]);
         console.log("Published sensor data:", sensorData);
       }
-    }, 15000);
+    }, 5000);
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { getVehicles, createVehicle } from "../../services/api";
 import { useRouter } from "next/navigation";
 
@@ -16,14 +16,18 @@ const VehicleList: React.FC = () => {
   const [errors, setErrors] = useState<any>({});
   const router = useRouter();
 
-  useEffect(() => {
-    fetchVehicles();
+  const fetchVehicles = useCallback(async () => {
+    try {
+      const response = await getVehicles();
+      setVehicles(response.data);
+    } catch (error) {
+      console.error("Failed to fetch vehicles", error);
+    }
   }, []);
 
-  const fetchVehicles = async () => {
-    const response = await getVehicles();
-    setVehicles(response.data);
-  };
+  useEffect(() => {
+    fetchVehicles();
+  }, [fetchVehicles]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -61,7 +65,7 @@ const VehicleList: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto bg-gray-100 min-h-screen p-4">
       <button
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         onClick={handleOpen}
@@ -157,6 +161,7 @@ const VehicleList: React.FC = () => {
                 id="ecuDeviceId"
                 name="ecuDeviceId"
                 type="text"
+                placeholder="put device-001 if you want simulation"
                 onChange={handleChange}
                 className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
                   errors.ecuDeviceId ? "border-red-500" : ""

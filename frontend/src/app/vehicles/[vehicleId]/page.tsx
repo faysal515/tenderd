@@ -7,15 +7,7 @@ import {
   getVehicleStatus,
   getMaintenanceRecords,
 } from "../../../services/api";
-import {
-  Typography,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-} from "@mui/material";
+import clsx from "clsx";
 
 interface AggregatedSensorData {
   lastGpsLocation: {
@@ -47,9 +39,9 @@ interface Vehicle {
   vehicleModel: string;
   year: number;
   ecuDeviceId: string;
-  aggregatedSensorData: AggregatedSensorData;
-  lastMaintenanceRecord: MaintenanceRecord;
-  usageAnalytics: UsageAnalytics;
+  aggregatedSensorData: AggregatedSensorData | null;
+  lastMaintenanceRecord: MaintenanceRecord | null;
+  usageAnalytics: UsageAnalytics | null;
 }
 
 const VehicleDetails: React.FC = () => {
@@ -64,7 +56,7 @@ const VehicleDetails: React.FC = () => {
   const [form, setForm] = useState({ description: "", date: "", cost: "" });
   const [status, setStatus] = useState<AggregatedSensorData | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [flash, setFlash] = useState(false);
 
   const fetchVehicleStatus = useCallback(async () => {
     if (!vehicleId) return;
@@ -79,8 +71,6 @@ const VehicleDetails: React.FC = () => {
   }, [vehicleId]);
 
   const fetchMaintenanceRecords = useCallback(async () => {
-    if (!vehicleId) return;
-
     try {
       const response = await getMaintenanceRecords(vehicleId);
       console.log("Maintenance records fetched:", response.data);
@@ -111,15 +101,13 @@ const VehicleDetails: React.FC = () => {
         console.log("Parsed SSE update:", updatedStatus);
 
         if (updatedStatus.error) {
-          setErrorMessage(updatedStatus.error);
+          console.error(updatedStatus.error);
           setVehicle(null);
-          setMaintenanceRecords([]);
-          setStatus(null);
         } else {
-          setErrorMessage(null);
           setStatus(updatedStatus);
           setVehicle(updatedStatus);
-          fetchMaintenanceRecords();
+          setFlash(true); // Trigger flash effect
+          setTimeout(() => setFlash(false), 500); // Remove flash effect after 500ms
         }
       } catch (error) {
         console.error("Error parsing SSE data:", error);
@@ -132,7 +120,7 @@ const VehicleDetails: React.FC = () => {
     };
 
     setEventSource(newEventSource);
-  }, [vehicleId, fetchMaintenanceRecords]);
+  }, [vehicleId]);
 
   useEffect(() => {
     if (vehicleId) {
@@ -140,8 +128,9 @@ const VehicleDetails: React.FC = () => {
         "Fetching vehicle details and status for vehicleId:",
         vehicleId
       );
-      setupSSE();
+      fetchVehicleStatus();
       fetchMaintenanceRecords();
+      setupSSE();
     } else {
       console.log("vehicleId is not defined");
     }
@@ -152,7 +141,7 @@ const VehicleDetails: React.FC = () => {
         setEventSource(null);
       }
     };
-  }, [vehicleId, setupSSE, fetchMaintenanceRecords]);
+  }, [vehicleId, fetchVehicleStatus, fetchMaintenanceRecords, setupSSE]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -189,86 +178,175 @@ const VehicleDetails: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      {errorMessage ? (
-        <Typography variant="h6" className="mb-2" color="error">
-          {errorMessage}
-        </Typography>
-      ) : vehicle ? (
-        <>
-          <Typography variant="h4" className="mb-4">
-            {`${vehicle.make} ${vehicle.vehicleModel} (${vehicle.year})`}
-          </Typography>
-          <Typography variant="h6" className="mb-2">
-            ECU Device ID: {vehicle.ecuDeviceId}
-          </Typography>
-          <Typography variant="h6" className="mb-2">
-            Aggregated Sensor Data:
-          </Typography>
-          <pre>{JSON.stringify(vehicle.aggregatedSensorData, null, 2)}</pre>
-          <Typography variant="h6" className="mb-2">
-            Maintenance Records:
-          </Typography>
-          <ul>
-            {maintenanceRecords.map((record: any) => (
-              <li key={record.id}>
-                {`${record.date}: ${record.description} ($${record.cost})`}
-              </li>
-            ))}
-          </ul>
-          <Button
-            variant="contained"
-            color="primary"
-            className="mt-4"
-            onClick={handleOpen}
-          >
-            Add Maintenance Record
-          </Button>
-          <Dialog open={open} onClose={handleClose}>
-            <DialogTitle>Add Maintenance Record</DialogTitle>
-            <DialogContent>
-              <TextField
-                name="description"
-                label="Description"
-                fullWidth
-                onChange={handleChange}
-                error={!!errors.description}
-                helperText={errors.description}
-              />
-              <TextField
-                name="date"
-                label="Date"
-                type="date"
-                fullWidth
-                onChange={handleChange}
-                error={!!errors.date}
-                helperText={errors.date}
-              />
-              <TextField
-                name="cost"
-                label="Cost"
-                type="number"
-                fullWidth
-                onChange={handleChange}
-                error={!!errors.cost}
-                helperText={errors.cost}
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button onClick={handleSubmit}>Submit</Button>
-            </DialogActions>
-          </Dialog>
-          <Typography variant="h6" className="mb-2">
-            Usage Analytics:
-          </Typography>
-          <pre>{JSON.stringify(vehicle.usageAnalytics, null, 2)}</pre>
-        </>
-      ) : (
-        <Typography variant="h6" className="mb-2">
-          No vehicle data available.
-        </Typography>
-      )}
+    <div className="min-h-screen">
+      <div className="container mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-6">Vehicle Details Page</h1>
+        {vehicle ? (
+          <div className={clsx({ "animate-flash": flash })}>
+            <h1 className="text-2xl font-bold mb-4">
+              {`${vehicle.make} ${vehicle.vehicleModel} (${vehicle.year})`}
+            </h1>
+            {vehicle.aggregatedSensorData ? (
+              <>
+                <p className="mb-2">
+                  <strong>Last Location:</strong>{" "}
+                  {`${vehicle.aggregatedSensorData.lastGpsLocation.latitude.toFixed(
+                    4
+                  )}° N, ${vehicle.aggregatedSensorData.lastGpsLocation.longitude.toFixed(
+                    4
+                  )}° W`}
+                </p>
+                <p className="mb-2">
+                  <strong>Last Update:</strong>{" "}
+                  {new Date(
+                    vehicle.aggregatedSensorData.timestamp
+                  ).toLocaleString()}
+                </p>
+                <p className="mb-2">
+                  <strong>Odometer Reading:</strong>{" "}
+                  {vehicle.aggregatedSensorData.odometerReading} miles
+                </p>
+                <p className="mb-2">
+                  <strong>Engine Hours:</strong>{" "}
+                  {vehicle.aggregatedSensorData.engineHours} hours
+                </p>
+                <p className="mb-2">
+                  <strong>Fuel Level:</strong>{" "}
+                  {vehicle.aggregatedSensorData.fuelLevel}
+                </p>
+              </>
+            ) : (
+              <p className="mb-2">No sensor data available.</p>
+            )}
+            <h2 className="text-xl font-bold mt-4 mb-2">
+              Maintenance Records:
+            </h2>
+            <ul className="list-disc pl-5">
+              {maintenanceRecords.length > 0 ? (
+                maintenanceRecords.map((record) => (
+                  <li key={record.id}>
+                    {new Date(record.date).toLocaleDateString()} - $
+                    {record.cost}
+                  </li>
+                ))
+              ) : (
+                <li>No maintenance records available.</li>
+              )}
+            </ul>
+            <button
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+              onClick={handleOpen}
+            >
+              Add Maintenance Record
+            </button>
+            {open && (
+              <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+                <div className="bg-white p-8 rounded-lg shadow-lg w-1/2">
+                  <h2 className="text-xl font-bold mb-4">
+                    Add Maintenance Record
+                  </h2>
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="description"
+                    >
+                      Description
+                    </label>
+                    <input
+                      id="description"
+                      name="description"
+                      type="text"
+                      onChange={handleChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      value={form.description}
+                    />
+                    {errors.description && (
+                      <p className="text-red-500 text-xs italic">
+                        {errors.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="date"
+                    >
+                      Date
+                    </label>
+                    <input
+                      id="date"
+                      name="date"
+                      type="date"
+                      onChange={handleChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      value={form.date}
+                    />
+                    {errors.date && (
+                      <p className="text-red-500 text-xs italic">
+                        {errors.date}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="cost"
+                    >
+                      Cost
+                    </label>
+                    <input
+                      id="cost"
+                      name="cost"
+                      type="number"
+                      onChange={handleChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      value={form.cost}
+                    />
+                    {errors.cost && (
+                      <p className="text-red-500 text-xs italic">
+                        {errors.cost}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <button
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                      type="button"
+                      onClick={handleSubmit}
+                    >
+                      Submit
+                    </button>
+                    <button
+                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                      type="button"
+                      onClick={handleClose}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <h2 className="text-xl font-bold mt-4 mb-2">Usage Analytics:</h2>
+            {vehicle.usageAnalytics ? (
+              <>
+                <p className="mb-2">
+                  <strong>Distance Traveled:</strong>{" "}
+                  {vehicle.usageAnalytics.distanceTraveled} miles
+                </p>
+                <p className="mb-2">
+                  <strong>Hours Operated:</strong>{" "}
+                  {vehicle.usageAnalytics.hoursOperated} hours
+                </p>
+              </>
+            ) : (
+              <p className="mb-2">No usage analytics available.</p>
+            )}
+          </div>
+        ) : (
+          <p className="text-lg font-bold mb-2">No vehicle data available.</p>
+        )}
+      </div>
     </div>
   );
 };
