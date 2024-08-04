@@ -13,15 +13,53 @@ import {
   TextField,
 } from "@mui/material";
 
+interface AggregatedSensorData {
+  lastGpsLocation: {
+    latitude: number;
+    longitude: number;
+    timestamp: string;
+  };
+  odometerReading: number;
+  engineHours: number;
+  fuelLevel: string;
+  timestamp: string;
+}
+
+interface MaintenanceRecord {
+  id: string;
+  date: string;
+  description: string;
+  cost: number;
+}
+
+interface UsageAnalytics {
+  distanceTraveled: number;
+  hoursOperated: number;
+}
+
+interface Vehicle {
+  id: string;
+  make: string;
+  vehicleModel: string;
+  year: number;
+  ecuDeviceId: string;
+  aggregatedSensorData: AggregatedSensorData;
+  lastMaintenanceRecord: MaintenanceRecord;
+  usageAnalytics: UsageAnalytics;
+}
+
 const VehicleDetails: React.FC = () => {
   const params = useParams();
   const vehicleId = params.vehicleId as string;
-  const [vehicle, setVehicle] = useState(null);
-  const [maintenanceRecords, setMaintenanceRecords] = useState([]);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [maintenanceRecords, setMaintenanceRecords] = useState<
+    MaintenanceRecord[]
+  >([]);
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ description: "", date: "", cost: "" });
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState<AggregatedSensorData | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const fetchVehicleStatus = useCallback(async () => {
     if (!vehicleId) return;
@@ -78,7 +116,6 @@ const VehicleDetails: React.FC = () => {
         "Fetching vehicle details and status for vehicleId:",
         vehicleId
       );
-      // fetchVehicleStatus();
       setupSSE();
     } else {
       console.log("vehicleId is not defined");
@@ -93,7 +130,10 @@ const VehicleDetails: React.FC = () => {
   }, [vehicleId, setupSSE]);
 
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    setErrors({});
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -101,11 +141,24 @@ const VehicleDetails: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      await addMaintenanceRecord(vehicleId, form);
+      const payload = {
+        ...form,
+        cost: parseFloat(form.cost),
+      };
+      await addMaintenanceRecord(vehicleId, payload);
       handleClose();
-      // fetchVehicleStatus();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding maintenance record:", error);
+      if (error.response && error.response.data && error.response.data.errors) {
+        const apiErrors = error.response.data.errors.reduce(
+          (acc: any, err: any) => {
+            acc[err.property] = Object.values(err.constraints).join(", ");
+            return acc;
+          },
+          {}
+        );
+        setErrors(apiErrors);
+      }
     }
   };
 
@@ -149,6 +202,8 @@ const VehicleDetails: React.FC = () => {
                 label="Description"
                 fullWidth
                 onChange={handleChange}
+                error={!!errors.description}
+                helperText={errors.description}
               />
               <TextField
                 name="date"
@@ -156,6 +211,8 @@ const VehicleDetails: React.FC = () => {
                 type="date"
                 fullWidth
                 onChange={handleChange}
+                error={!!errors.date}
+                helperText={errors.date}
               />
               <TextField
                 name="cost"
@@ -163,6 +220,8 @@ const VehicleDetails: React.FC = () => {
                 type="number"
                 fullWidth
                 onChange={handleChange}
+                error={!!errors.cost}
+                helperText={errors.cost}
               />
             </DialogContent>
             <DialogActions>
