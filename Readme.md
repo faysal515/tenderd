@@ -53,6 +53,8 @@ Views are pretty basic. **Vehicle realtime status page is showing flickering eve
 
 **Hybrid approach for Maintenance record** - Mixing denormalization for quick access to the latest maintenance record in the vehicle collection which might be useful from Product UX view. and normalization for keeping a full chain of history with its full details.
 
+Maintenance record could be done in transaction session, but it requires mongodb to have replica set configuration. thus descoped
+
 
 All modern vehicles are equipped with an ECU(Electronic Control Unit) board that communicates with sensors and the server. Thus the assumption is that, hardware attached in the vehicle can emit all data at once
 
